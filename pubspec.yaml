@@ -1,5 +1,6 @@
 name: e_repairkit
-description: "A new Flutter project."
+owner: Denzel Quah
+description: "Package for e_repairkit app"
 publish_to: 'none'
 version: 0.1.0
 
@@ -7,10 +8,19 @@ environment:
   sdk: ^3.7.2
 
 dependencies:
-  firebase_core: ^4.2.0
   flutter:
-    sdk: flutter
+      sdk: flutter
+
   provider: ^6.1.5+1
+  google_generative_ai: ^0.4.7
+  flutter_dotenv: ^5.1.0
+  firebase_core: any
+  cloud_firestore: any
+  async: ^2.12.0
+  location: any
+  http: any
+
+
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +29,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env

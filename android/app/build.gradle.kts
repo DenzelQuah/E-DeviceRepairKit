@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.e_repairkit"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
     ndkVersion = "27.0.12077973"
 

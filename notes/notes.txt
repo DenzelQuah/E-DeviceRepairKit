@@ -29,3 +29,12 @@ eg: Let say i create box view page
 
 Constraint/Const: The widget or value never changes, so Flutter can build it once and reuse it forever
 -> It doesn’t depend on any variables, user input, or runtime data.
+
+
+
+flutter_dotenv.env is to keep safety(SECURITY REASON)
+SECURITY REASON: Never paste your API key directly into your code
+
+
+
+cloud_firestore is to securely get and add data
