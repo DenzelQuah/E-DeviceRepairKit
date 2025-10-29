@@ -1,0 +1,31 @@
+TO run the app (emulator that support Huawei HMS Core)
+1. flutter emulators --launch HuaweiTestEmu
+2. flutter run
+
+
+Widget
+Definition Stateful/Stateless: Decide if the overall state/view can or cannot be change
+
+eg: Let say i create box view page
+ Flow: Create a page
+ CREATE Stateful/Stateless is basically create a box.
+                main > runApp
+                    |
+                Box(i created)
+                    |
+                datatype (variable)
+                    |
+            return MaterialApp (widget for theming,appbar,dashboard...)
+                    |
+                 Scaffold
+                    |
+                  AppBar
+                    |
+                   Body
+
+
+
+
+
+Constraint/Const: The widget or value never changes, so Flutter can build it once and reuse it forever
+-> It doesn’t depend on any variables, user input, or runtime data.
