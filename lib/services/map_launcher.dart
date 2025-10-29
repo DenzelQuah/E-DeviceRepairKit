@@ -66,14 +66,14 @@ Future<void> openMapToLocation({
 
   if (Platform.isAndroid) {
     if (navUri != null && await tryLaunch(navUri, LaunchMode.externalApplication)) return;
-    if (geoUri != null && await tryLaunch(geoUri, LaunchMode.externalApplication)) return;
-    if (httpsUri != null && await tryLaunch(httpsUri, LaunchMode.externalApplication)) return;
-    if (httpsUri != null && await tryLaunch(httpsUri, LaunchMode.inAppWebView)) return;
+    if (await tryLaunch(geoUri, LaunchMode.externalApplication)) return;
+    if (await tryLaunch(httpsUri, LaunchMode.externalApplication)) return;
+    if (await tryLaunch(httpsUri, LaunchMode.inAppWebView)) return;
   } else {
-    if (httpsUri != null && await tryLaunch(httpsUri, LaunchMode.externalApplication)) return;
-    if (httpsUri != null && await tryLaunch(httpsUri, LaunchMode.inAppWebView)) return;
-    if (geoUri != null && await tryLaunch(geoUri, LaunchMode.externalApplication)) return;
-    if (geoUri != null && await tryLaunch(geoUri, LaunchMode.inAppWebView)) return;
+    if (await tryLaunch(httpsUri, LaunchMode.externalApplication)) return;
+    if (await tryLaunch(httpsUri, LaunchMode.inAppWebView)) return;
+    if (await tryLaunch(geoUri, LaunchMode.externalApplication)) return;
+    if (await tryLaunch(geoUri, LaunchMode.inAppWebView)) return;
   }
 
   throw Exception('Could not launch maps URL. Last tried https: $httpsUri, geo: $geoUri, nav: $navUri');
