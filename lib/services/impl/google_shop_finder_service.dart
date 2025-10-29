@@ -1,4 +1,6 @@
+// ...existing code...
 import 'dart:convert';
+import 'dart:math';
 import 'package:e_repairkit/models/location.dart';
 import 'package:e_repairkit/models/shop.dart';
 import 'package:e_repairkit/services/findshop_service.dart';
@@ -7,45 +9,26 @@ import 'package:http/http.dart' as http;
 
 class GoogleShopFinderService implements ShopFinderService {
   final String _apiKey = dotenv.env['PLACES_API_KEY']!;
-  final String _baseUrl = 'https://places.googleapis.com/v1/places:searchNearby';
+  // Use the Text Search endpoint but keep the same variable name
+  final String _baseUrl = 'https://maps.googleapis.com/maps/api/place/textsearch/json';
 
   @override
   Future<List<Shop>> findNearby(Location location) async {
-    final Uri uri = Uri.parse(_baseUrl);
-
-    // This is the JSON data we send to Google
-    final requestBody = {
-      "includedTypes": ["electronics_store", "store"],
-      "maxResultCount": 10,
-      "locationRestriction": {
-        "circle": {
-          "center": {
-            "latitude": location.latitude,
-            "longitude": location.longitude
-          },
-          "radius": 5000.0 // 5km radius
-        }
-      },
-      // We add a text query to focus on repairs
-      "textQuery": "electronics repair"
-    };
+    final query = Uri.encodeQueryComponent('electronics repair');
+    final uri = Uri.parse('$_baseUrl?query=$query&location=${location.latitude},${location.longitude}&radius=5000&key=$_apiKey');
 
     try {
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': _apiKey,
-          // This tells Google which fields to return (saves money)
-          'X-Goog-FieldMask': 'places.displayName,places.id,places.location',
-        },
-        body: jsonEncode(requestBody),
-      );
+      final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List places = data['places'] ?? [];
-        return places.map((place) => _convertFromGoogle(place)).toList();
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final status = data['status'] as String? ?? 'UNKNOWN';
+        if (status != 'OK' && status != 'ZERO_RESULTS') {
+          print('Places API Error: $data');
+          throw Exception('Failed to load shops');
+        }
+        final List places = data['results'] ?? [];
+        return places.map((place) => _convertFromGoogle(place as Map<String, dynamic>, location)).toList();
       } else {
         print('Places API Error: ${response.body}');
         throw Exception('Failed to load shops');
@@ -57,13 +40,30 @@ class GoogleShopFinderService implements ShopFinderService {
   }
 
   // Helper to convert Google's format to our simple 'Shop' model
-  Shop _convertFromGoogle(Map<String, dynamic> place) {
+  Shop _convertFromGoogle(Map<String, dynamic> place, Location userLocation) {
+    final geometry = place['geometry'] as Map<String, dynamic>?;
+    final loc = geometry?['location'] as Map<String, dynamic>?;
+    final lat = (loc?['lat'] as num?)?.toDouble() ?? 0.0;
+    final lng = (loc?['lng'] as num?)?.toDouble() ?? 0.0;
+    final distanceKm = _distanceKm(userLocation.latitude, userLocation.longitude, lat, lng);
+
     return Shop(
-      id: place['id'] ?? 'unknown_id',
-      name: place['displayName']?['text'] ?? 'Unknown Shop',
-      // The Places API doesn't return distance, 
-      // so we just use 0.0 for now.
-      distance: 0.0, 
+      id: place['place_id'] ?? 'unknown_id',
+      name: place['name'] ?? 'Unknown Shop',
+      distance: double.parse(distanceKm.toStringAsFixed(2)),
     );
   }
+
+  double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371.0; // Earth radius km
+    final dLat = _deg2rad(lat2 - lat1);
+    final dLon = _deg2rad(lon2 - lon1);
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+
+  double _deg2rad(double deg) => deg * (pi / 180.0);
 }
+// ...existing code...

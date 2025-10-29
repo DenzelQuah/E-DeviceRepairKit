@@ -68,6 +68,9 @@ class GeminiAIService implements AIService {
     - "estimatedTimeMinutes": An integer for the time in minutes
     - "safetyNotes": A string with any safety warnings.
 
+For experimental suggestions include a 1-step quick test the user can run to verify the idea safely.
+Only output valid JSON and nothing else.
+
     Here is an example of a perfect response:
     {
       "rawText": "I see your phone screen is cracked. Here's a suggestion.",

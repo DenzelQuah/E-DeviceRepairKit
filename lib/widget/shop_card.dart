@@ -1,3 +1,4 @@
+import 'package:e_repairkit/services/map_launcher.dart';
 import 'package:flutter/material.dart';
 import '../../models/shop.dart';
 
@@ -15,9 +16,18 @@ class ShopCard extends StatelessWidget {
         title: Text(shop.name),
         subtitle: Text('Approx. ${shop.distance} km away'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          // You can add navigation to a map view here later
-        },
+        onTap: () async {
+        try {
+        await openMapToLocation(
+        lat: shop.lat,
+        long: shop.long,
+        placeId: shop.id,
+        name: shop.name,
+      );
+    } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open map')));
+  }
+},
       ),
     );
   }
