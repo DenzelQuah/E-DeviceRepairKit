@@ -1,1 +1,43 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"e-devicerepairkit","appId":"1:528214248415:android:88d33996849676cb62526a","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"e-devicerepairkit","configurations":{"android":"1:528214248415:android:88d33996849676cb62526a","ios":"1:528214248415:ios:2793eb0c7536badd62526a","macos":"1:528214248415:ios:2793eb0c7536badd62526a","web":"1:528214248415:web:4fdbb0dc6858b33d62526a","windows":"1:528214248415:web:00ec6fa38a15b2bd62526a"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "e-devicerepairkit",
+          "appId": "1:528214248415:android:88d33996849676cb62526a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "e-devicerepairkit",
+          "configurations": {
+            "android": "1:528214248415:android:88d33996849676cb62526a",
+            "ios": "1:528214248415:ios:2793eb0c7536badd62526a",
+            "macos": "1:528214248415:ios:2793eb0c7536badd62526a",
+            "web": "1:528214248415:web:4fdbb0dc6858b33d62526a",
+            "windows": "1:528214248415:web:00ec6fa38a15b2bd62526a"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}

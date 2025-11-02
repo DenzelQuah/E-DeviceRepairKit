@@ -23,12 +23,25 @@ class FirestoreChatService implements ChatService {
         .orderBy('timestamp', descending: false) // Show oldest first
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    });
+          return snapshot.docs.map((doc) => doc.data()).toList();
+        });
   }
 
   @override
   Future<void> saveMessage(Message message, String sessionId) async {
     await _getMessagesCollection(sessionId).doc(message.id).set(message);
+  }
+
+  @override
+  Future<void> deleteReplies(String sessionId, String inReplyToId) async {
+    final col = _getMessagesCollection(sessionId);
+    final snap =
+        await col
+            .where('inReplyTo', isEqualTo: inReplyToId)
+            .where('isFromUser', isEqualTo: false)
+            .get();
+    for (final doc in snap.docs) {
+      await col.doc(doc.id).delete();
+    }
   }
 }

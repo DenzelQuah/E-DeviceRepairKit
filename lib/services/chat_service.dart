@@ -6,4 +6,7 @@ abstract class ChatService {
 
   // Save a new message
   Future<void> saveMessage(Message message, String sessionId);
+
+  // Delete reply messages (AI responses) that are in reply to a particular user message
+  Future<void> deleteReplies(String sessionId, String inReplyToId);
 }

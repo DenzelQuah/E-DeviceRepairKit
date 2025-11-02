@@ -1,5 +1,5 @@
 // ignore: library_prefixes
-import 'package:e_repairkit/models/location.dart' as AppLocation; // Use 'as' to avoid name conflicts
+import 'package:e_repairkit/models/location.dart' as AppLocation;
 import 'package:e_repairkit/services/location_service.dart';
 import 'package:location/location.dart';
 

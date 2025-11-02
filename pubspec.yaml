@@ -20,6 +20,23 @@ dependencies:
   location: any
   http: any
   url_launcher: ^6.3.2
+  image_picker: ^1.2.0
+  google_mlkit_commons: ^0.11.0
+  shared_preferences: ^2.5.3
+  connectivity_plus: ^7.0.0
+  sqflite: any
+  path_provider: any
+  path: any
+  google_sign_in: ^6.0.0
+  firebase_auth: ^6.1.1
+  rxdart: ^0.28.0
+  huawei_push: ^6.11.0+300
+  google_mlkit_image_labeling: ^0.14.1
+  google_mlkit_text_recognition: ^0.15.0
+  google_fonts: ^5.0.0
+  flutter_native_splash: ^2.3.2
+  flutter_launcher_icons: ^0.14.4
+  
 
 
 
@@ -32,3 +49,18 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - lib/assets/google_logo.png
+    - lib/assets/appicon.png
+
+flutter_native_splash:
+  color: "#05031A"  # Match your Neon BG color
+  image: lib/assets/appicon.png
+  android: true
+  ios: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/assets/appicon.png"
+  adaptive_icon_background: "#FFFFFF"   # optional
+  adaptive_icon_foreground: "lib/assets/appicon.png"  # optional

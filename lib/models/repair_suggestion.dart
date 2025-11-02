@@ -1,5 +1,24 @@
+import 'dart:convert';
+
+// (Your _parseList helper function stays the same)
+List<String> _parseList(dynamic jsonValue) {
+  if (jsonValue == null) return [];
+  if (jsonValue is String) {
+    if (jsonValue.isEmpty) return [];
+    try {
+      final list = jsonDecode(jsonValue) as List;
+      return list.map((e) => e.toString()).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+  if (jsonValue is List) {
+    return jsonValue.map((e) => e.toString()).toList();
+  }
+  return [];
+}
+
 class RepairSuggestion {
-  // 1. These are the "fields"
   final String id;
   final String title;
   final List<String> steps;
@@ -7,8 +26,15 @@ class RepairSuggestion {
   final double confidence;
   final int estimatedTimeMinutes;
   final String safetyNotes;
+  final String query;
+  final List<String> keywords;
 
-  // 2. This is the "constructor"
+  // --- 1. ADD THESE NEW COMMUNITY FIELDS ---
+  final int tryCount;
+  final double avgRating;
+  final int ratingCount;
+  final int commentCount;
+
   RepairSuggestion({
     required this.id,
     required this.title,
@@ -17,31 +43,83 @@ class RepairSuggestion {
     required this.confidence,
     required this.estimatedTimeMinutes,
     required this.safetyNotes,
+    this.query = '',
+    this.keywords = const [],
+    // --- 2. ADD TO CONSTRUCTOR (WITH DEFAULTS) ---
+    this.tryCount = 0,
+    this.avgRating = 0.0,
+    this.ratingCount = 0,
+    this.commentCount = 0,
   });
 
-  // 3. This is the "fromJson" factory
   factory RepairSuggestion.fromJson(Map<String, dynamic> json) {
     return RepairSuggestion(
       id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
       title: json['title'] ?? 'No Title',
-      steps: List<String>.from(json['steps'] ?? []),
-      tools: List<String>.from(json['tools'] ?? []),
-      confidence: (json['confidence'] ?? 0.5).toDouble(),
-      estimatedTimeMinutes: json['estimatedTimeMinutes'] ?? 10,
+      steps: _parseList(json['steps']),
+      tools: _parseList(json['tools']),
+      confidence: (json['confidence'] ?? 0.80).toDouble(),
+      estimatedTimeMinutes: (json['estimatedTimeMinutes'] ?? 10).toInt(),
       safetyNotes: json['safetyNotes'] ?? '',
+      query: json['query'] ?? '',
+      keywords: _parseList(json['keywords']),
+      // --- 3. ADD TO FROMJSON ---
+      tryCount: (json['tryCount'] ?? 0).toInt(),
+      avgRating: (json['avgRating'] ?? 0.0).toDouble(),
+      ratingCount: (json['ratingCount'] ?? 0).toInt(),
+      commentCount: (json['commentCount'] ?? 0).toInt(),
     );
   }
 
-  // 4. This is the "toJson" method
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'title': title,
-      'steps': steps,
-      'tools': tools,
+      'steps': jsonEncode(steps),
+      'tools': jsonEncode(tools),
       'confidence': confidence,
       'estimatedTimeMinutes': estimatedTimeMinutes,
       'safetyNotes': safetyNotes,
+      'query': query,
+      'keywords': jsonEncode(keywords),
+      // --- 4. ADD TO TOJSON ---
+      'tryCount': tryCount,
+      'avgRating': avgRating,
+      'ratingCount': ratingCount,
+      'commentCount': commentCount,
     };
+  }
+
+  // --- 5. ADD TO COPYWITH ---
+  RepairSuggestion copyWith({
+    String? id,
+    String? title,
+    List<String>? steps,
+    List<String>? tools,
+    double? confidence,
+    int? estimatedTimeMinutes,
+    String? safetyNotes,
+    String? query,
+    List<String>? keywords,
+    int? tryCount,
+    double? avgRating,
+    int? ratingCount,
+    int? commentCount,
+  }) {
+    return RepairSuggestion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      steps: steps ?? this.steps,
+      tools: tools ?? this.tools,
+      confidence: confidence ?? this.confidence,
+      estimatedTimeMinutes: estimatedTimeMinutes ?? this.estimatedTimeMinutes,
+      safetyNotes: safetyNotes ?? this.safetyNotes,
+      query: query ?? this.query,
+      keywords: keywords ?? this.keywords,
+      tryCount: tryCount ?? this.tryCount,
+      avgRating: avgRating ?? this.avgRating,
+      ratingCount: ratingCount ?? this.ratingCount,
+      commentCount: commentCount ?? this.commentCount,
+    );
   }
 }
