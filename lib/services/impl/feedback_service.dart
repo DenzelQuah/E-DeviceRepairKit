@@ -27,6 +27,7 @@ class FirestoreFeedbackService implements FeedbackService {
     await _feedbackCollection().doc(docId).set(entry, SetOptions(merge: true));
   }
 
+  @override
   Stream<List<FeedbackEntry>> getMySavedFeedback(String userId) {
     return _feedbackCollection()
         .where('userId', isEqualTo: userId)
@@ -36,10 +37,19 @@ class FirestoreFeedbackService implements FeedbackService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
   
+  // --- THIS IS THE COMPLETED FUNCTION ---
   @override
-  Future<List<FeedbackEntry>> fetchForSuggestion(String suggestionId) {
-    // TODO: implement fetchForSuggestion
-    throw UnimplementedError();
+  Future<List<FeedbackEntry>> fetchForSuggestion(String suggestionId) async {
+    try {
+      final snapshot = await _feedbackCollection()
+          .where('suggestionId', isEqualTo: suggestionId)
+          .orderBy('createdAt', descending: true)
+          .get();
+          
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      print("Error fetching feedback for suggestion $suggestionId: $e");
+      return []; // Return an empty list on error
+    }
   }
 }
-

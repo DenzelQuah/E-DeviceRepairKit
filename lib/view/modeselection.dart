@@ -1,3 +1,4 @@
+
 import 'package:e_repairkit/view/chatview.dart';
 import 'package:e_repairkit/viewmodels/chat_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class ModeSelectionView extends StatefulWidget {
 class _ModeSelectionViewState extends State<ModeSelectionView> {
   // Store the local state for this page
   String _selectedMode = 'practical';
-  double _selectedTemp = 0.2;
+  double _selectedTemp = 0.5; // Matches your ViewModel's default
 
   @override
   void initState() {
@@ -30,10 +31,16 @@ class _ModeSelectionViewState extends State<ModeSelectionView> {
     vm.setMode(_selectedMode);
     vm.setTemperature(_selectedTemp);
     
+    // --- 1. THIS IS THE FIRST CRITICAL LINE ---
+    // This tells the ViewModel to start a new, blank session.
+    vm.startNewChatSession();
+    
     // Replace this page with the ChatView
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (cxt) => const ChatView()),
+      // --- 2. THIS IS THE SECOND CRITICAL FIX ---
+      // It now navigates to `ChatView`, which is the correct class name.
+      MaterialPageRoute(builder: (cxt) => const ChatView()), 
     );
   }
 
@@ -123,7 +130,7 @@ class _ModeSelectionViewState extends State<ModeSelectionView> {
             const SizedBox(height: 40),
 
             // --- Start Chat Button ---
-             ElevatedButton(
+              ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: theme.textTheme.titleMedium?.copyWith(
@@ -180,7 +187,7 @@ class _ModeSelectionCard extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected ? [
-             BoxShadow(
+              BoxShadow(
               color: theme.primaryColor.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
@@ -245,7 +252,7 @@ class _CreativitySlider extends StatelessWidget {
           divisions: 10,
           label: value.toStringAsFixed(2),
           activeColor: theme.primaryColor,
-          inactiveColor: Colors.blue,
+          inactiveColor: theme.primaryColor.withOpacity(0.3),
           onChanged: onChanged,
         ),
       ],

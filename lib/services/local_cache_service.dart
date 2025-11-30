@@ -51,7 +51,7 @@ class LocalCacheService {
       // Create and return the AIResponse object from the parsed map
       return AIResponse(
         rawText: m['rawText'] as String? ?? '',
-        suggestions: suggestions,
+        suggestions: suggestions, followUp: true,
       );
     } catch (_) {
       // If parsing fails (e.g., bad data), return null

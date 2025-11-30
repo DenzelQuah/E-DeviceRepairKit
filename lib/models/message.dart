@@ -34,7 +34,7 @@ class Message {
       text: json['text'],
       isFromUser: json['isFromUser'],
       timestamp:
-          json['timestamp'] ?? Timestamp.now(), // Handle missing timestamp
+          json['timestamp'] ?? Timestamp.now(),
       suggestions: suggestionsList.isNotEmpty ? suggestionsList : null,
       inReplyTo: json['inReplyTo'] as String?,
       edited: json['edited'] as bool? ?? false,

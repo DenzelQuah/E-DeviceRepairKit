@@ -11,7 +11,7 @@ class OfflineSearchView extends StatefulWidget {
   State<OfflineSearchView> createState() => _OfflineSearchViewState();
 }
 
-class _OfflineSearchViewState extends State<OfflineSearchView> {
+class _OfflineSearchViewState extends State<OfflineSearchView> with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   late Future<List<RepairSuggestion>> _resultsFuture;
 
@@ -30,6 +30,7 @@ class _OfflineSearchViewState extends State<OfflineSearchView> {
   }
 
   Future<List<RepairSuggestion>> _performSearch(String query) {
+    // Ensuring the provider is correctly read
     return context.read<OfflineSearchService>().searchOffline(query);
   }
 
@@ -62,39 +63,39 @@ class _OfflineSearchViewState extends State<OfflineSearchView> {
   Widget build(BuildContext context) {
     return Scaffold(
       // subtle gradient app bar + dark neon background
-      backgroundColor: _bg0,
+      
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        
         toolbarHeight: 80,
         centerTitle: false,
-        title: Row(
-          children: [
-            // small neon badge
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  colors: [_neonA, _neonB],
+        title: Padding(
+          padding: const EdgeInsets.only(left: 4.0),
+          child: Row(
+            children: [
+              // small neon badge
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [_neonA, _neonB],
+                  ),
+                  
                 ),
-                boxShadow: [
-                  BoxShadow(color: _neonA.withOpacity(0.14), blurRadius: 16, spreadRadius: 1),
-                  BoxShadow(color: _neonB.withOpacity(0.08), blurRadius: 30, spreadRadius: 2),
-                ],
+                child: const Icon(Icons.build_rounded, color: Colors.black87, size: 22),
               ),
-              child: const Icon(Icons.build_rounded, color: Colors.black87, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Offline Solutions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.95))),
-                Text('Tap a problem to explore saved solutions', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.55))),
-              ],
-            )
-          ],
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Offline Solutions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.95))),
+                  Text('Tap a problem to explore saved solutions', style: TextStyle(fontSize: 12, color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.55))),
+                ],
+              )
+            ],
+          ),
         ),
       ),
       body: Container(
@@ -234,7 +235,7 @@ class _NeonSearchField extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Colors.white12, Colors.white10],
@@ -355,6 +356,7 @@ class _NeonExpansionTileState extends State<_NeonExpansionTile> with SingleTicke
           boxShadow: _open ? shadow : null,
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align header left
           children: [
             // Header
             Row(

@@ -10,11 +10,15 @@ abstract class AIService {
   /// - topP: nucleus sampling parameter
   /// - mode: either 'practical' or 'experimental'
   Future<AIResponse> diagnose({
-    required Message message,
+    
+    //required Message message,
+    required List<Message> history, 
     String? imagePath,
     double? temperature,
     double? topP,
     String? mode,
     Map<String, dynamic>? imageAnalysis,
   });
+
+  Future<bool> isRepairQuestion(String userQuery);
 }

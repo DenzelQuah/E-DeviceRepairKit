@@ -10,17 +10,17 @@ import 'package:e_repairkit/services/impl/firestore_forum_service.dart';
 import 'package:e_repairkit/services/impl/gemini_ai_Service.dart';
 import 'package:e_repairkit/services/impl/google_location_service.dart';
 import 'package:e_repairkit/services/impl/hms_push_service.dart';
+import 'package:e_repairkit/services/impl/stub_push_service.dart';
 import 'package:e_repairkit/services/offline_search_service.dart';
 import 'package:e_repairkit/view/splash.dart';
 import 'package:e_repairkit/widget/auth_wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-
-
-import 'services/ai_service.dart';
+// import 'services/ai_service.dart'; // <-- 1. THIS WAS THE DUPLICATE IMPORT ERROR
 import 'services/cache_service.dart';
 import 'services/chat_service.dart';
 import 'services/feedback_service.dart';
@@ -29,6 +29,7 @@ import 'services/impl/firestore_chat_service.dart';
 import 'services/impl/google_shop_finder_service.dart';
 import 'services/location_service.dart';
 import 'viewmodels/chat_viewmodel.dart';
+import 'services/ai_service.dart'; // <-- This is the correct one to keep
 
 // --- 1. DEFINE YOUR APP'S COLOR PALETTE ---
 const Color kPrimaryColor = Color(0xFF0571ab); // Your deep blue
@@ -44,8 +45,16 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        // --- SERVICES ---
-        Provider<AuthService>(create: (_) => FirebaseAuthService()), // <-- 5. Add AuthService
+        // --- BASE SDKs ---
+        Provider<FirebaseAuth>(create: (_) => FirebaseAuth.instance),
+        Provider<FirebaseFirestore>(create: (_) => FirebaseFirestore.instance),
+
+        // --- CORE SERVICES ---
+        Provider<AuthService>(
+          create: (context) => FirebaseAuthService(
+          
+          ),
+        ),
         Provider<ChatService>(create: (_) => FirestoreChatService()),
         Provider<AIService>(create: (_) => GeminiAIService()),
         Provider<LocationService>(create: (_) => GoogleLocationService()),
@@ -53,27 +62,34 @@ Future<void> main() async {
         Provider<FeedbackService>(create: (_) => FirestoreFeedbackService()),
         Provider<LocalCacheService>(create: (_) => LocalCacheService()),
         Provider<OfflineSearchService>(create: (_) => OfflineSearchService()),
-        Provider<ForumService>(create: (_) => FirestoreForumService()),
-        Provider<FirebaseAuth>(create: (_) => FirebaseAuth.instance), // Provides the SDK instance
-        Provider<FirebaseFirestore>(create: (_) => FirebaseFirestore.instance),
-        
-        // --- 6. ADD THE STREAMPROVIDER (THIS FIXES YOUR ERROR) ---
-        // This listens to auth state and provides AppUser? to the app
+
+        // --- PUSH SERVICE (Must be defined *before* ForumService) ---
+        Provider<PushService>(
+          create: (context) {
+            if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+              return StubPushService();
+            }
+            return HmsPushService(
+              auth: context.read<FirebaseAuth>(),
+              firestore: context.read<FirebaseFirestore>(),
+            );
+          },
+        ),
+
+        // --- FORUM SERVICE (Depends on PushService) ---
+        Provider<ForumService>(
+          create: (context) => FirestoreForumService(
+            pushService: context.read<PushService>(),
+          ),
+        ),
+
+        // --- STREAM PROVIDER (Depends on AuthService) ---
         StreamProvider<AppUser?>(
           create: (context) => context.read<AuthService>().onAuthStateChanged,
           initialData: null,
         ),
 
-
-            Provider<PushService>(
-  create: (context) => HmsPushService(
-    auth: context.read<FirebaseAuth>(),
-    firestore: context.read<FirebaseFirestore>(),
-  ),
-),
-
-
-        // --- ViewModel ---
+        // --- ViewModel (Depends on all services) ---
         ChangeNotifierProvider(
           create: (context) => ChatViewModel(
             aiService: context.read<AIService>(),
@@ -85,19 +101,14 @@ Future<void> main() async {
             offlineSearch: context.read<OfflineSearchService>(),
             forumService: context.read<ForumService>(),
             pushService: context.read<PushService>(),
-            
           ),
         ),
-
       ],
-
-
-      
       child: const MyApp(),
     ),
   );
 }
-
+// ... (rest of MyApp is correct)
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -106,10 +117,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'E-RepairKit',
       debugShowCheckedModeBanner: false,
-
-
-
-      // --- THEME DATA (FROM YOUR ICON) ---
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -150,19 +157,16 @@ class MyApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system,
-
-      // --- 7. SET HOME TO THE AUTH WRAPPER ---
       home: NeonSplashScreen(
-  duration: const Duration(milliseconds: 2600),
-  onFinish: () {
-    // Navigate AFTER splash finishes
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const AuthWrapper()),
-    );
-  },
-),
+        duration: const Duration(milliseconds: 2600),
+        onFinish: () {
+          // Navigate AFTER splash finishes
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthWrapper()),
+          );
+        },
+      ),
     );
   }
 }
-

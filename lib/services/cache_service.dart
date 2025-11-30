@@ -36,7 +36,7 @@ class LocalCacheService {
           [];
       return AIResponse(
         rawText: m['rawText'] as String? ?? '',
-        suggestions: suggestions,
+        suggestions: suggestions, followUp:false,
       );
     } catch (_) {
       return null;

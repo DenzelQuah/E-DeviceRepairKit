@@ -1,12 +1,9 @@
-// lib/services/impl/hms_push_service.dart (FINAL CORRECTED VERSION)
-
 import 'package:e_repairkit/models/push_service.dart';
 import 'package:flutter/services.dart';
-import 'package:huawei_push/huawei_push.dart'; 
-// FIX 1: Add the specific import for the messaging constants
-import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:huawei_push/huawei_push.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// This is the REAL implementation that runs ONLY on Android.
 class HmsPushService implements PushService {
@@ -14,7 +11,7 @@ class HmsPushService implements PushService {
   final FirebaseFirestore _firestore;
   static const String _tokenKey = 'hms_push_token';
 
-  // Constructor to inject dependencies
+  // Constructor is correct (no circular dependency)
   HmsPushService({required FirebaseAuth auth, required FirebaseFirestore firestore})
       : _auth = auth,
         _firestore = firestore;
@@ -27,11 +24,8 @@ class HmsPushService implements PushService {
       Push.getTokenStream.listen(
         (token) async {
           print("Got Huawei Push Token: $token");
-          
-          // Store token locally
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_tokenKey, token);
-          
           final userId = _auth.currentUser?.uid;
           if (userId != null) {
             final userDocRef = _firestore.collection('users').doc(userId);
@@ -46,7 +40,6 @@ class HmsPushService implements PushService {
         },
       );
 
-      // FIX 2: AWAIT the getToken call to ensure reliability and use the correct constant
       Push.getToken("HCM");
 
       Push.onMessageReceivedStream.listen((RemoteMessage message) {
@@ -64,16 +57,12 @@ class HmsPushService implements PushService {
   Future<void> deleteToken() async {
     try {
       final userId = _auth.currentUser?.uid;
-
-      // Get the stored token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      final currentToken = prefs.getString(_tokenKey); // This is correct, no await needed
+      final currentToken = prefs.getString(_tokenKey);
 
-      // FIX 3: AWAIT the Push.deleteToken call and use the correct constant
       Push.deleteToken("HCM");
       print("Push token deleted.");
 
-      // Remove from local storage
       await prefs.remove(_tokenKey);
 
       if (userId != null && currentToken != null) {
@@ -85,6 +74,75 @@ class HmsPushService implements PushService {
       }
     } on PlatformException catch (e) {
       print("Failed to delete token: ${e.message}");
+    }
+  }
+
+  @override
+  Future<void> sendNotificationToUser({
+    required String userId,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': userId,
+        'title': title,
+        'body': body,
+        'data': data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print("Notification job queued for user $userId.");
+    } catch (e) {
+      print("Failed to queue notification job: $e");
+    }
+  }
+
+  // --- 1. ADD SUBSCRIBE IMPLEMENTATION ---
+  @override
+  Future<void> subscribeToTopic(String topic) async {
+    try {
+      // Replaces invalid characters for a topic name
+      final safeTopic = topic.replaceAll(RegExp(r'[^a-zA-Z0-9-_.~%]+'), '_');
+      await Push.subscribe(safeTopic);
+      print("Subscribed to topic: $safeTopic");
+    } on PlatformException catch (e) {
+      print("Failed to subscribe to topic $topic: ${e.message}");
+    }
+  }
+
+  // --- 2. ADD UNSUBSCRIBE IMPLEMENTATION ---
+  @override
+  Future<void> unsubscribeFromTopic(String topic) async {
+    try {
+      final safeTopic = topic.replaceAll(RegExp(r'[^a-zA-Z0-9-_.~%]+'), '_');
+      await Push.unsubscribe(safeTopic);
+      print("Unsubscribed from topic: $safeTopic");
+    } on PlatformException catch (e) {
+      print("Failed to unsubscribe from topic $topic: ${e.message}");
+    }
+  }
+
+  // --- 3. ADD TOPIC NOTIFICATION IMPLEMENTATION ---
+  @override
+  Future<void> sendNotificationToTopic({
+    required String topic,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+      // This is the "job" that a Cloud Function would listen for.
+      await _firestore.collection('notifications').add({
+        'topic': topic, // The topic you want to send to
+        'title': title,
+        'body': body,
+        'data': data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print("Notification job queued for topic $topic.");
+    } catch (e) {
+      print("Failed to queue topic notification job: $e");
     }
   }
 }
