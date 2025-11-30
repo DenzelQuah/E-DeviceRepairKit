@@ -3,7 +3,7 @@
 > **# E-RepairKit 🛠️📱**
 > A multi-platform mobile solution integrating AI diagnosis, real-time service logistics, and offline accessibility.
 
-[![Huawei AppGallery](https://img.shields.io/badge/Get%20it%20on-Huawei%20AppGallery-C7000B?logo=huawei&logoColor=white)](https://appgallery.huawei.com/#/app/C112399131)
+[![Huawei AppGallery](https://img.shields.io/badge/Get%20it%20on-Huawei%20AppGallery-C7000B?logo=huawei&logoColor=white)](https://appgallery.huawei.com/app/C115774029)
 ![Status](https://img.shields.io/badge/Competition-Track%20B-blue)
 ![AI](https://img.shields.io/badge/Powered%20By-Gemini%20AI-4E8BF5)
 
