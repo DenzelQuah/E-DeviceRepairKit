@@ -4,7 +4,7 @@
 > A multi-platform mobile solution integrating AI diagnosis, real-time service logistics, and offline accessibility.
 
 [![Huawei AppGallery](https://img.shields.io/badge/Get%20it%20on-Huawei%20AppGallery-C7000B?logo=huawei&logoColor=white)](https://appgallery.huawei.com/app/C115774029)
-![Status](https://img.shields.io/badge/Competition-Track%20B-blue)
+[![Competition Status](https://img.shields.io/badge/Competition-Track%20B-blue)](https://www.linkedin.com/feed/update/urn:li:activity:7393801868092694528/)
 ![AI](https://img.shields.io/badge/Powered%20By-Gemini%20AI-4E8BF5)
 
 ## 📖 Introduction
@@ -43,10 +43,10 @@ E-RepairKit creates social value by aligning with the United Nations Sustainable
     * [cite_start]Reduces digital inequality by providing technical support in offline scenarios[cite: 593].
 
 ## 🛠️ Technology Stack
-* **Framework:** .NET MAUI / Flutter (Multi-platform support)
+* **Framework:** Flutter (Multi-platform support)
 * [cite_start]**AI Engine:** Google Gemini API [cite: 573]
 * [cite_start]**Cloud/Services:** Huawei Push Kit, Huawei AppGallery [cite: 573]
-* **Database:** SQL / Local Caching
+* **Database:** SQL / Local Caching & Firebase 
 
 ## 🔮 Future Roadmap
 * [cite_start]**In-App Marketplace:** Direct purchase links for the exact tools and parts recommended by the diagnosis[cite: 426].
@@ -56,7 +56,8 @@ E-RepairKit creates social value by aligning with the United Nations Sustainable
 ## 📥 Download
 Scan the QR code or click the badge below to download from the Huawei AppGallery:
 
-<img src="E-RepairKit-1024.png" width="200" alt="Download QR Code">
+<img src="<img width="1024" height="1332" alt="E-RepairKit-1024" src="https://github.com/user-attachments/assets/ff10f13c-08e6-4dc7-ac7b-76b6a14b5a72" />
+ width="200" alt="Download QR Code">
 
 [**Download on Huawei AppGallery**]( <img width="1024" height="1332" alt="E-RepairKit-1024" src="https://github.com/user-attachments/assets/519a4a8f-83a8-4c36-a772-35b2d5b5ca59" />
 )
