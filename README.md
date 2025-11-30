@@ -12,16 +12,6 @@
 
 [cite_start]Crucially, E-RepairKit bridges the digital divide with **Offline capabilities**, ensuring vital technical knowledge is accessible even without an internet connection[cite: 592, 593].
 
-## 📱 Screenshots
-
-| Splash Screen | Authentication | Home Dashboard |
-|:---:|:---:|:---:|
-| <img src="https://github.com/user-attachments/assets/f47c8e47-f6ca-44e0-9338-171ed72441a8" width="200" /> | <img src="https://github.com/user-attachments/assets/0d37da54-ef98-4f66-910c-70a30513ad83" width="200" /> | <img src="https://github.com/user-attachments/assets/d641b414-cc40-49f6-b471-9e8ccfaedbfa" width="200" /> |
-| **Mode Selection** | **AI Assistant** | **Offline Diagnosis** |
-| <img src="https://github.com/user-attachments/assets/a33d8629-c33c-4eb5-bc80-0572474736e3" width="200" /> | <img src="https://github.com/user-attachments/assets/7bb2ff4c-6985-462e-81c6-cc24b3100cd9" width="200" /> | <img src="https://github.com/user-attachments/assets/ece51198-88bf-4196-ba00-9a4a7f6e3f31" width="200" /> |
-| **Community Forum** | **Find Repair Shop** | **User Profile** |
-| <img src="https://github.com/user-attachments/assets/23f86904-4bf8-43a1-b56f-209f30d67c97" width="200" /> | <img src="https://github.com/user-attachments/assets/6a20f56e-d5b4-4231-956c-e91a19d85f81" width="200" /> | <img src="https://github.com/user-attachments/assets/009d4227-25c2-410d-957b-5ce9d673cf84" width="200" /> |
-
 ## ✨ Key Features
 
 ### 🤖 AI Repair Assistant (Gemini API)
@@ -74,6 +64,17 @@ Scan the QR code or click the badge below to download from the Huawei AppGallery
 * [cite_start]**Event:** 4th UXHMAC X HUAWEI AppGallery Mobile App Competition 2025 [cite: 567]
 * [cite_start]**Track:** Track B - Mobile Application Product Competition [cite: 572]
 * [cite_start]**University:** Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA) [cite: 573]
+
+
+## 📱 Screenshots
+
+| Splash Screen | Authentication | Home Dashboard |
+|:---:|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/f47c8e47-f6ca-44e0-9338-171ed72441a8" width="200" /> | <img src="https://github.com/user-attachments/assets/0d37da54-ef98-4f66-910c-70a30513ad83" width="200" /> | <img src="https://github.com/user-attachments/assets/d641b414-cc40-49f6-b471-9e8ccfaedbfa" width="200" /> |
+| **Mode Selection** | **AI Assistant** | **Offline Diagnosis** |
+| <img src="https://github.com/user-attachments/assets/a33d8629-c33c-4eb5-bc80-0572474736e3" width="200" /> | <img src="https://github.com/user-attachments/assets/7bb2ff4c-6985-462e-81c6-cc24b3100cd9" width="200" /> | <img src="https://github.com/user-attachments/assets/ece51198-88bf-4196-ba00-9a4a7f6e3f31" width="200" /> |
+| **Community Forum** | **Find Repair Shop** | **User Profile** |
+| <img src="https://github.com/user-attachments/assets/23f86904-4bf8-43a1-b56f-209f30d67c97" width="200" /> | <img src="https://github.com/user-attachments/assets/6a20f56e-d5b4-4231-956c-e91a19d85f81" width="200" /> | <img src="https://github.com/user-attachments/assets/009d4227-25c2-410d-957b-5ce9d673cf84" width="200" /> |
 
 ## 👨‍💻 Team
 * [cite_start]**Denzel Quah Kah Liang** - Team Leader & Full Stack Developer [cite: 573]
