@@ -58,7 +58,8 @@ Scan the QR code or click the badge below to download from the Huawei AppGallery
 
 <img src="E-RepairKit-1024.png" width="200" alt="Download QR Code">
 
-[**Download on Huawei AppGallery**](https://appgallery.huawei.com/#/app/C112399131)
+[**Download on Huawei AppGallery**]( <img width="1024" height="1332" alt="E-RepairKit-1024" src="https://github.com/user-attachments/assets/519a4a8f-83a8-4c36-a772-35b2d5b5ca59" />
+)
 
 ## 🏆 Competition Details
 * [cite_start]**Event:** 4th UXHMAC X HUAWEI AppGallery Mobile App Competition 2025 [cite: 567]
