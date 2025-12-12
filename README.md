@@ -63,7 +63,7 @@ Scan the QR code or click the badge below to download from the Huawei AppGallery
 )
 
 ## 🏆 Competition Details
-* [cite_start]**Event:** 4th UXHMAC X HUAWEI AppGallery Mobile App Competition 2025 [cite: 567]
+* [cite_start]**Event:** 4th UXHMAC X HUAWEI AppGallery Mobile App Competition 2025 [Top-10 achievement] [cite: 572]
 * [cite_start]**Track:** Track B - Mobile Application Product Competition [cite: 572]
 * [cite_start]**University:** Universiti Malaysia Pahang Al-Sultan Abdullah (UMPSA) [cite: 573]
 
