@@ -13,23 +13,24 @@ class GeminiAIService implements AIService {
   final GenerativeModel _model;
   final List<Message> _history = [];
   int _failedAttempts = 0;
-  
+
   // Diagnostic conversation state
-  String _conversationStage = 'initial'; // initial, gathering_info, diagnosing, solution_proposed, verification
+  String _conversationStage =
+      'initial'; // initial, gathering_info, diagnosing, solution_proposed, verification
   Map<String, dynamic> _diagnosticData = {};
   bool _waitingForFixConfirmation = false;
 
   GeminiAIService()
-      : _model = GenerativeModel(
-          model: 'models/gemini-2.5-flash',
-          apiKey: dotenv.env['GEMINI_API_KEY']!,
-          safetySettings: [
-            SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
-            SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
-            SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
-            SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
-          ],
-        );
+    : _model = GenerativeModel(
+        model: 'models/gemini-2.5-flash',
+        apiKey: dotenv.env['GEMINI_API_KEY']!,
+        safetySettings: [
+          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
+        ],
+      );
 
   @override
   Future<AIResponse> diagnose({
@@ -51,7 +52,9 @@ class GeminiAIService implements AIService {
       );
 
       if (imageAnalysis != null) {
-        print('GeminiAIService: sending imageAnalysis to model: ${jsonEncode(imageAnalysis)}');
+        print(
+          'GeminiAIService: sending imageAnalysis to model: ${jsonEncode(imageAnalysis)}',
+        );
       }
 
       final response = await _model.generateContent([Content.text(prompt)]);
@@ -79,37 +82,62 @@ class GeminiAIService implements AIService {
     Map<String, dynamic>? imageAnalysis,
   }) {
     // Build chat history
-    final historyString = history.map((msg) {
-      final role = msg.isFromUser ? 'User' : 'Assistant';
-      return "$role: ${msg.text}";
-    }).join('\n');
+    final historyString = history
+        .map((msg) => "${msg.isFromUser ? 'User' : 'Assistant'}: ${msg.text}")
+        .join('\n');
+
+        
 
     // Mode instruction
     String modeInstruction = '';
     if (mode == 'experimental') {
       modeInstruction = '''
-      IMPORTANT: You are in EXPERIMENTAL mode.
-      After completing diagnosis, provide one safe solution first, then a creative experimental alternative.
-      Label the second solution "🧪 Experimental Hack:" with appropriate warnings.
+     **CURRENT MODE: 🧪 EXPERIMENTAL**
+      - Your priority is **EDUCATION & DIY**.
+      - You are allowed to suggest advanced, difficult, or risky repairs (e.g., screen replacement, component soldering).
+      - **PHYSICAL DAMAGE:** If the user has physical damage (cracked screen, water damage), **WARN THEM STRONGLY** about the risks, but **PROVIDE THE STEPS** anyway.
+      - Mark suggestions as "High Risk" in the title if applicable.
+      - **STRATEGY:** Provide the most thorough, likely-to-work solution first, even if complex.
+      - **NO ATTEMPTS LIMIT:** Provide the next logical solution regardless of how many previous attempts failed.
+      - **ALWAYS SHOW SUGGESTION:** You MUST populate the `suggestions` array with a new fix if one is available. Never return an empty array just because of failure count.
+      - **STORE RECOMMENDATION:** If `FAILED ATTEMPTS > 0`, adds a note in "rawText": "Since that didn't work, would you like to find a repair shop?" BUT **ALWAYS** provide the next solution in the card.
       ''';
+
     } else {
       modeInstruction = '''
-      IMPORTANT: You are in PRACTICAL mode.
-      Provide ONLY the most common, safest, and most reliable solutions.
+      **CURRENT MODE: 🛡️ PRACTICAL (QUICK FIX)**
+      - Priority: **SIMPLE TROUBLESHOOTING BEFORE SHOP VISITS**.
+      - **WATER DAMAGE RULE:** If the user mentions water, liquid, or "green line after spill", **DO NOT** suggest charging or restarting. Suggest turning it off immediately.
+      - **STRATEGY:** Suggest safe solution repair only (Force Restart, Clean Port, Safe Mode).
+      
+      **THE "TWO ATTEMPTS" RULE (Follow Strictly):**
+      - CHECK the `FAILED ATTEMPTS` count below.
+      
+      1. **If FAILED ATTEMPTS = 0:** - Provide your **#1 Best** Quick Fix.
+      
+      2. **If FAILED ATTEMPTS = 1:** - Provide your **#2 Best** Quick Fix (Must be different).
+      
+      3. **If FAILED ATTEMPTS >= 2:** - **STOP IMMEDIATELY.**
+          - Return "suggestions": [] (empty array).
+         - **CRITICAL:** In your text response, explicitly tell the user: "Since the quick fixes didn't work, it is likely a hardware issue. I recommend finding a repair shop near you."
+      
+      - **PHYSICAL DAMAGE:** If clearly broken (shattered screen), treat as "FAILED ATTEMPTS = 2" immediately (Skip to Shop).
       ''';
     }
 
     // Image analysis handling
-    final imageNote = (imagePath != null)
-        ? '\nUser attached an image; use it to help diagnose visible issues.'
-        : '';
+    final imageNote =
+        (imagePath != null)
+            ? '\nUser attached an image; use it to help diagnose visible issues.'
+            : '';
 
     String analysisNote = '';
     if (imageAnalysis != null) {
       try {
         final rawLabels = imageAnalysis['labels'] ?? [];
         final ocr = imageAnalysis['ocr'] ?? '';
-        final filename = imageAnalysis['attachedImageFilename'] ?? imagePath ?? '';
+        final filename =
+            imageAnalysis['attachedImageFilename'] ?? imagePath ?? '';
         final unavailable = imageAnalysis['analysisUnavailable'] == true;
 
         final formattedLabels = <String>[];
@@ -119,7 +147,10 @@ class GeminiAIService implements AIService {
           for (final l in rawLabels) {
             if (l is Map && l.containsKey('label')) {
               final lab = l['label'] as String;
-              final conf = (l['confidence'] is num) ? (l['confidence'] as num).toDouble() : 0.0;
+              final conf =
+                  (l['confidence'] is num)
+                      ? (l['confidence'] as num).toDouble()
+                      : 0.0;
               formattedLabels.add('$lab (${(conf * 100).toStringAsFixed(0)}%)');
               if (conf > topConfidence) {
                 topConfidence = conf;
@@ -130,13 +161,16 @@ class GeminiAIService implements AIService {
           }
         }
 
-        analysisNote = '\nImage analysis for ${filename.isNotEmpty ? filename : 'attached image'}:';
-        analysisNote += '\n- labels: ${formattedLabels.isNotEmpty ? formattedLabels : rawLabels}';
+        analysisNote =
+            '\nImage analysis for ${filename.isNotEmpty ? filename : 'attached image'}:';
+        analysisNote +=
+            '\n- labels: ${formattedLabels.isNotEmpty ? formattedLabels : rawLabels}';
         if (ocr != null && (ocr as String).isNotEmpty) {
           analysisNote += '\n- ocr: $ocr';
         }
         if (unavailable) {
-          analysisNote += '\n- note: Analysis unavailable, but image was attached.';
+          analysisNote +=
+              '\n- note: Analysis unavailable, but image was attached.';
         }
       } catch (e) {
         analysisNote = '\nImage attached but analysis details unavailable.';
@@ -144,12 +178,62 @@ class GeminiAIService implements AIService {
     }
 
     return '''
-You are an expert electronics repair assistant conducting a DIAGNOSTIC CONVERSATION with a user.
+You are an expert Electronics Repair Technician using a "Diagnostic Conversation" approach.
+**GOAL:** Diagnose the user's issue through conversation, THEN provide a solution based on the current mode.
 
-**CRITICAL: You must follow a structured diagnostic process. DO NOT jump to solutions immediately.**
 
---- USER'S LATEST MESSAGE ---
-"$problem"
+$modeInstruction
+
+**DIAGNOSTIC CONVERSATION FLOW (You MUST follow these stages strictly):**
+**STAGE 1: GATHERING INFO (The "Follow-Up" Phase)**
+- If you don't know the **Device Model**, ask for it.
+- If you don't know **When/How it started**, ask for it.
+- **CRITICAL RULE:** Ask **ONE** question at a time. Do not overwhelm the user.
+- **OUTPUT:** "rawText": "Your single question here", "suggestions": [], "followUp": true
+
+**STAGE 2: HYPOTHESIS & CONFIRMATION**
+- Once you have the context (Model + Symptoms), summarize the issue.
+- State your diagnosis (what you think is wrong).
+- Ask the user if they want to proceed with the repair steps.
+- **OUTPUT:** "rawText": "It sounds like a faulty X. Shall I show you how to fix it?", "suggestions": [], "followUp": true
+
+**STAGE 3: DIAGNOSING & SOLVING (Providing the Fix)**
+- Provide 1-3 detailed solutions ranked by likelihood.
+- **RETRY RULE:** If the user says "It didn't work" or "No", you MUST provide a **DIFFERENT** solution than the previous one. Do not repeat the same steps.
+- APPLY MODE RULES (Experimental vs Practical).
+- Output: "followUp": true, "suggestions": [{...}]
+
+
+**STAGE 4: SOLUTION_PROPOSED**
+- (You have just provided the solution steps)
+- Ask the user to try them and let you know if it worked.
+- **OUTPUT:** "rawText": "Let me know if this works...", "suggestions": [], "followUp": true
+
+**STAGE 5: VERIFICATION**
+- If user says "yes/fixed": Celebrate and offer further help.
+- If user says "no/broken": Apologize and provide a **DIFFERENT** solution (Stage 3 again).
+- If user says "no" and you have ran out of ideas, recommend a repair shop.
+
+**RESPONSE FORMAT (Strict JSON):**
+You MUST return ONLY a valid JSON object.
+{
+  "rawText": "Your conversational advice to the user...",
+  "followUp": true,
+  "suggestions": [
+    {
+      "id": "unique_id",
+      "query": "Summarized Problem (e.g., Pixel 7 Water Damage)",
+      "title": "The Solution Title (e.g., Drying & Desiccant Method)",
+      "deviceType": "Phone",
+      "steps": ["Step 1...", "Step 2..."],
+      "tools": ["Tool A", "Tool B"],
+      "confidence": 0.9,
+      "estimatedTimeMinutes": 45,
+      "safetyNotes": "Do not charge the device."
+    }
+  ]
+}
+
 
 --- CONVERSATION HISTORY ---
 $historyString
@@ -160,113 +244,45 @@ $historyString
 ${jsonEncode(_diagnosticData)}
 --- END OF DIAGNOSTIC DATA ---
 
-$modeInstruction
+
+--- USER'S LATEST MESSAGE ---
+"$problem"
 $imageNote
 $analysisNote
+
 
 **DIAGNOSTIC CONVERSATION FLOW (You MUST follow these stages strictly):**
 
 **CURRENT STAGE: $_conversationStage**
 **FAILED ATTEMPTS: $_failedAttempts**
 
-**STAGE 1: INITIAL ASSESSMENT (stage = 'initial')**
-When user first describes a problem:
-- Acknowledge their issue warmly
-- Ask 2-3 KEY diagnostic questions
-- DO NOT provide solutions yet
-- Set "followUp": true, "suggestions": []
-
-**STAGE 2: GATHERING_INFO (stage = 'gathering_info')**
-Continue asking clarifying questions until you have:
-- Device type, brand, model
-- Exact symptoms
-- Timeline of when it started
-- Any incidents (spills, drops, updates)
-- Previous troubleshooting attempts
-
-When you have ENOUGH information, propose your diagnosis:
-- Summarize what you've learned
-- State your diagnosis with confidence level
-- Ask: "Does this match what you're experiencing? Would you like me to provide repair steps?"
-- Set "followUp": true, "suggestions": []
-
-**STAGE 3: DIAGNOSING (stage = 'diagnosing')**
-User has confirmed they want repair steps.
-NOW provide detailed solutions:
-- Offer 1-3 solutions ranked by likelihood
-- Include full steps, tools, safety warnings
-- End with: "Please try this solution and let me know if it worked!"
-- Set "followUp": true, "suggestions": [... detailed solutions ...]
-
-**STAGE 4: SOLUTION_PROPOSED (stage = 'solution_proposed')**
-You've already provided solutions. Move to verification stage.
-- Set "followUp": true
-
-**STAGE 5: VERIFICATION (stage = 'verification')**
-User is testing your solution.
-
-If user input contains "yes"/"worked"/"fixed":
-{
-  "rawText": "🎉 Excellent! Your device is repaired. Feel free to ask about any other issues!",
-  "suggestions": [],
-  "followUp": false
-}
-
-If user input contains "no"/"didn't work"/"still broken" AND attempts < 3:
-- Acknowledge the failed attempt
-- Ask what happened during the attempt
-- Provide a COMPLETELY DIFFERENT solution approach
-- Set "followUp": true, "suggestions": [... new different solution ...]
-
-If attempts >= 3:
-{
-  "rawText": "I understand this is challenging. Based on the symptoms and failed attempts, I recommend consulting a professional repair technician who can physically inspect the device.",
-  "suggestions": [
-    {
-      "id": "professional_help",
-      "title": "Seek Professional Repair",
-      "steps": ["Contact a certified repair shop for hands-on diagnosis"],
-      "tools": [],
-      "confidence": 1.0,
-      "estimatedTimeMinutes": 0,
-      "safetyNotes": "Professional diagnosis recommended for complex issues."
-    }
-  ],
-  "followUp": false
-}
 
 **CRITICAL RULES:**
-1. DO NOT provide solutions during INITIAL or GATHERING_INFO stages
-2. DO NOT congratulate the user unless they explicitly said it worked
-3. ONLY provide "suggestions" array when in DIAGNOSING stage or later
-4. If current stage is "gathering_info", you MUST ask more questions
-5. If current stage is "diagnosing", you MUST provide detailed repair solutions
+1. **ONE QUESTION RULE:** In Stage 1 & 2, never ask more than 1 question per turn.
+2. Keep responses short and conversational (mobile-friendly).
+3. DO NOT provide solutions until Stage 3.
 
-**Example for GATHERING_INFO stage:**
+**Example for GATHERING_INFO stage (CORRECT - Single Question):**
 {
-  "rawText": "Thank you for that information! Just a few more questions to narrow this down:\\n\\n1. Is the battery completely dead, or does the charging indicator light up?\\n2. How long have you tried charging it?\\n3. Are you using the original charger?",
+  "rawText": "I see. To help you better, could you tell me exactly which iPhone model this is?",
   "suggestions": [],
   "followUp": true
 }
 
-**Example for DIAGNOSING stage (providing solution):**
+**Example for DIAGNOSING stage (Providing Solution):**
 {
-  "rawText": "Based on your RK61 mechanical keyboard with one key not working after water spill, here's my diagnosis:\\n\\n**Most Likely Cause:** Corrosion or residue on the switch contacts from water damage\\n\\nHere are the solutions:",
+  "rawText": "Thanks. Since it's an iPhone 11 and the screen is black but vibrates, it's likely a **display connector issue**. Here is how to fix it:",
   "suggestions": [
     {
-      "id": "clean_switch",
-      "title": "Clean and Dry the Keyboard Switch",
-      "steps": [
-        "Unplug the keyboard immediately",
-        "Remove the keycap using a keycap puller or carefully with your fingers",
-        "Use isopropyl alcohol (90%+) on a cotton swab to clean around the switch",
-        "Let it dry completely for 2-3 hours",
-        "Test the key before reassembling"
-      ],
-      "tools": ["Isopropyl alcohol 90%+", "Cotton swabs", "Keycap puller (optional)"],
-      "confidence": 0.8,
-      "estimatedTimeMinutes": 30,
-      "safetyNotes": "Ensure keyboard is unplugged. Let alcohol dry completely before use."
+    "id": "unique_id",
+      "query": "Summarized Problem (e.g., Pixel 7 Water Damage)",
+      "title": "The Solution Title (e.g., Drying & Desiccant Method)",
+      "deviceType": "Phone",
+      "steps": ["Step 1...", "Step 2..."],
+      "tools": ["Tool A", "Tool B"],
+      "confidence": 0.9,
+      "estimatedTimeMinutes": 45,
+      "safetyNotes": "Do not charge the device."
     }
   ],
   "followUp": true
@@ -326,25 +342,57 @@ Only output valid JSON. No code blocks, no extra text.
   Future<bool> isRepairQuestion(String userQuery) async {
     final lowerQuery = userQuery.toLowerCase().trim();
 
-    if (lowerQuery.length < 10 || 
-      ['yes', 'no', 'ok', 'sure', 'okay', 'yup', 'nope'].contains(lowerQuery)) {
-    return true;  // Allow it through
-  }
-  
+    // 1. ALLOW SHORT ANSWERS
+    if (lowerQuery.length < 5 ||
+        ['yes', 'no', 'ok', 'sure', 'yup', 'nope'].contains(lowerQuery)) {
+      return true;
+    }
+
+    // 2. THE FIX: ALLOW DEVICE BRANDS MANUALLY
+    // If the text contains a brand name, we let it pass immediately.
+    List<String> deviceKeywords = [
+      'pixel',
+      'iphone',
+      'samsung',
+      'huawei',
+      'xiaomi',
+      'oppo',
+      'vivo',
+      'redmi',
+      'realme',
+      'honor',
+      'sony',
+      'nokia',
+      'motorola',
+      'asus',
+      'lenovo',
+      'hp',
+      'dell',
+      'acer',
+      'macbook',
+      'ipad',
+      'tab',
+      'tv',
+      'monitor',
+    ];
+
+    for (String brand in deviceKeywords) {
+      if (lowerQuery.contains(brand)) {
+        return true; // <--- This stops the error message!
+      }
+    }
+
+    // 3. ASK AI (Only if it's not a brand name)
     try {
       final prompt = """
-      Is the following query related to fixing, repairing, diagnosing, troubleshooting electronics, or finding repair shops? 
-      Respond with only "YES" or "NO".
-
+      Is the following query related to fixing, repairing, diagnosing electronics, 
+      OR is it providing a device name (like "Pixel 7")? 
+      Respond "YES" or "NO".
       Query: "$userQuery"
       """;
 
       final response = await _model.generateContent([Content.text(prompt)]);
-      
-      if (response.text == null) {
-        return true;
-      }
-      return response.text!.toLowerCase().contains('yes');
+      return response.text?.trim().toUpperCase().contains('YES') ?? true;
     } catch (e) {
       return true;
     }
@@ -367,7 +415,7 @@ Only output valid JSON. No code blocks, no extra text.
     );
 
     _waitingForFixConfirmation = aiResponse.followUp;
-    
+
     final assistantMessage = Message(
       text: aiResponse.rawText,
       isFromUser: false,
@@ -383,137 +431,135 @@ Only output valid JSON. No code blocks, no extra text.
     return aiResponse;
   }
 
-// Replace your _updateConversationStage and handleUserMessage methods with these:
+  // Replace your _updateConversationStage and handleUserMessage methods with these:
 
-void _updateConversationStage(String userInput, AIResponse response) {
-  final lowerInput = userInput.toLowerCase();
-  final lowerResponse = response.rawText.toLowerCase();
-  
-  print('DEBUG: Current stage: $_conversationStage');
-  print('DEBUG: User input: $userInput');
-  print('DEBUG: Has suggestions: ${response.suggestions.isNotEmpty}');
-  
-  // Stage 1: Initial → Gathering Info
-  if (_conversationStage == 'initial') {
-    _conversationStage = 'gathering_info';
-    print('DEBUG: Moved to gathering_info');
-  }
-  
-  // Stage 2: Gathering Info → Still gathering or move to diagnosing
-  else if (_conversationStage == 'gathering_info') {
-    // Check if AI is proposing a diagnosis (contains phrases like "based on", "diagnosis", "most likely")
-    if (lowerResponse.contains('diagnosis') || 
-        lowerResponse.contains('based on what you') ||
-        lowerResponse.contains('most likely') ||
-        lowerResponse.contains('here\'s what i think')) {
-      _conversationStage = 'diagnosing';
-      print('DEBUG: Moved to diagnosing');
-    }
-    // Otherwise stay in gathering_info
-  }
-  
-  // Stage 3: Diagnosing → Solution Proposed (when user confirms and AI provides solutions)
-  else if (_conversationStage == 'diagnosing') {
-    if (response.suggestions.isNotEmpty) {
-      _conversationStage = 'solution_proposed';
-      print('DEBUG: Moved to solution_proposed');
-    }
-  }
-  
-  // Stage 4: Solution Proposed → Verification (waiting for user to try solution)
-  else if (_conversationStage == 'solution_proposed') {
-    _conversationStage = 'verification';
-    print('DEBUG: Moved to verification');
-  }
-  
-  // Stage 5: Verification → Handle success/failure
-  else if (_conversationStage == 'verification') {
-    bool isSuccess = lowerInput.contains('yes') || 
-                      lowerInput.contains('work') || 
-                      lowerInput.contains('fixed') ||
-                      lowerInput.contains('solved');
-    
-    bool isFailure = lowerInput.contains('no') || 
-                      lowerInput.contains('didn\'t work') || 
-                      lowerInput.contains('still') ||
-                      lowerInput.contains('not work');
-    
-    if (isSuccess) {
-      print('DEBUG: User confirmed success - resetting');
-      // Will be reset in handleUserMessage
-    } else if (isFailure) {
-      print('DEBUG: User reported failure - attempt ${_failedAttempts + 1}');
-      // Stay in verification to try another solution
-    }
-  }
-}
+  void _updateConversationStage(String userInput, AIResponse response) {
+    final lowerInput = userInput.toLowerCase();
+    final lowerResponse = response.rawText.toLowerCase();
 
-Future<void> handleUserMessage(String userText) async {
-  print('DEBUG: handleUserMessage called with: $userText');
-  print('DEBUG: Current stage: $_conversationStage, Failed attempts: $_failedAttempts');
-  
-  final lowerText = userText.toLowerCase();
-  
-  // CASE 1: Initial problem or new conversation
-  if (_conversationStage == 'initial' || !_waitingForFixConfirmation) {
-    print('DEBUG: Starting new diagnostic conversation');
-    _failedAttempts = 0;
-    _conversationStage = 'initial';
-    _diagnosticData = {'initialProblem': userText};
-    _history.clear();
-    
-    await sendPromptToAI(userText);
+    print('DEBUG: Current stage: $_conversationStage');
+    print('DEBUG: User input: $userInput');
+    print('DEBUG: Has suggestions: ${response.suggestions.isNotEmpty}');
+
+    // Stage 1: Initial → Gathering Info
+    if (_conversationStage == 'initial') {
+      _conversationStage = 'gathering_info';
+      print('DEBUG: Moved to gathering_info');
+    }
+    // Stage 2: Gathering Info → Still gathering or move to diagnosing
+    else if (_conversationStage == 'gathering_info') {
+      // Check if AI is proposing a diagnosis (contains phrases like "based on", "diagnosis", "most likely")
+      if (lowerResponse.contains('diagnosis') ||
+          lowerResponse.contains('based on what you') ||
+          lowerResponse.contains('most likely') ||
+          lowerResponse.contains('here\'s what i think')) {
+        _conversationStage = 'diagnosing';
+        print('DEBUG: Moved to diagnosing');
+      }
+      // Otherwise stay in gathering_info
+    }
+    // Stage 3: Diagnosing → Solution Proposed (when user confirms and AI provides solutions)
+    else if (_conversationStage == 'diagnosing') {
+      if (response.suggestions.isNotEmpty) {
+        _conversationStage = 'solution_proposed';
+        print('DEBUG: Moved to solution_proposed');
+      }
+    }
+    // Stage 4: Solution Proposed → Verification (waiting for user to try solution)
+    else if (_conversationStage == 'solution_proposed') {
+      _conversationStage = 'verification';
+      print('DEBUG: Moved to verification');
+    }
+    // Stage 5: Verification → Handle success/failure
+    else if (_conversationStage == 'verification') {
+      bool isSuccess =
+          lowerInput.contains('yes') ||
+          lowerInput.contains('work') ||
+          lowerInput.contains('fixed') ||
+          lowerInput.contains('solved');
+
+      bool isFailure =
+          lowerInput.contains('no') ||
+          lowerInput.contains('didn\'t work') ||
+          lowerInput.contains('still') ||
+          lowerInput.contains('not work');
+
+      if (isSuccess) {
+        print('DEBUG: User confirmed success - resetting');
+        // Will be reset in handleUserMessage
+      } else if (isFailure) {
+        print('DEBUG: User reported failure - attempt ${_failedAttempts + 1}');
+        // Stay in verification to try another solution
+      }
+    }
   }
-  
-  // CASE 2: User confirms solution worked
-  else if (_conversationStage == 'verification' && 
-           (lowerText.contains('yes') || 
-            lowerText.contains('work') || 
+
+  Future<void> handleUserMessage(String userText) async {
+    print('DEBUG: handleUserMessage called with: $userText');
+    print(
+      'DEBUG: Current stage: $_conversationStage, Failed attempts: $_failedAttempts',
+    );
+
+    final lowerText = userText.toLowerCase();
+
+    // CASE 1: Initial problem or new conversation
+    if (_conversationStage == 'initial' || !_waitingForFixConfirmation) {
+      print('DEBUG: Starting new diagnostic conversation');
+      _failedAttempts = 0;
+      _conversationStage = 'initial';
+      _diagnosticData = {'initialProblem': userText};
+      _history.clear();
+
+      await sendPromptToAI(userText);
+    }
+    // CASE 2: User confirms solution worked
+    else if (_conversationStage == 'verification' &&
+        (lowerText.contains('yes') ||
+            lowerText.contains('work') ||
             lowerText.contains('fixed'))) {
-    print('DEBUG: Solution confirmed successful');
-    _failedAttempts = 0;
-    await sendPromptToAI('SUCCESS: The solution worked! Problem is fixed.');
-    _resetConversation();
-  }
-  
-  // CASE 3: Solution failed - try again
-  else if (_conversationStage == 'verification' && 
-            (lowerText.contains('no') || 
-            lowerText.contains('didn\'t') || 
-            lowerText.contains('still'))) {
-    _failedAttempts++;
-    print('DEBUG: Solution failed - attempt $_failedAttempts');
-    
-    if (_failedAttempts < 3) {
-      String failurePrompt = 'FAILED ATTEMPT #$_failedAttempts: The previous solution did not work. User says: "$userText". Please provide a DIFFERENT approach.';
-      await sendPromptToAI(failurePrompt);
-    } else {
-      // Too many failures - recommend professional help
-      String finalPrompt = 'FINAL FAILURE: After $_failedAttempts attempts, none worked. Recommend professional help.';
-      await sendPromptToAI(finalPrompt);
+      print('DEBUG: Solution confirmed successful');
+      _failedAttempts = 0;
+      await sendPromptToAI('SUCCESS: The solution worked! Problem is fixed.');
       _resetConversation();
     }
+    // CASE 3: Solution failed - try again
+    else if (_conversationStage == 'verification' &&
+        (lowerText.contains('no') ||
+            lowerText.contains('didn\'t') ||
+            lowerText.contains('still'))) {
+      _failedAttempts++;
+      print('DEBUG: Solution failed - attempt $_failedAttempts');
+
+      if (_failedAttempts < 3) {
+        String failurePrompt =
+            'FAILED ATTEMPT #$_failedAttempts: The previous solution did not work. User says: "$userText". Please provide a DIFFERENT approach.';
+        await sendPromptToAI(failurePrompt);
+      } else {
+        // Too many failures - recommend professional help
+        String finalPrompt =
+            'FINAL FAILURE: After $_failedAttempts attempts, none worked. Recommend professional help.';
+        await sendPromptToAI(finalPrompt);
+        _resetConversation();
+      }
+    }
+    // CASE 4: Still in diagnostic conversation (answering questions)
+    else if (_conversationStage == 'gathering_info' ||
+        _conversationStage == 'diagnosing') {
+      print('DEBUG: Continuing diagnostic conversation');
+      _diagnosticData['response_${_history.length}'] = userText;
+      await sendPromptToAI(userText);
+    }
+    // CASE 5: User provided info, expecting solution
+    else if (_conversationStage == 'solution_proposed') {
+      print('DEBUG: Moving to provide solution');
+      await sendPromptToAI(userText);
+    }
+    // CASE 6: Default - continue conversation
+    else {
+      print('DEBUG: Default case - continuing conversation');
+      await sendPromptToAI(userText);
+    }
   }
-  
-  // CASE 4: Still in diagnostic conversation (answering questions)
-  else if (_conversationStage == 'gathering_info' || _conversationStage == 'diagnosing') {
-    print('DEBUG: Continuing diagnostic conversation');
-    _diagnosticData['response_${_history.length}'] = userText;
-    await sendPromptToAI(userText);
-  }
-  
-  // CASE 5: User provided info, expecting solution
-  else if (_conversationStage == 'solution_proposed') {
-    print('DEBUG: Moving to provide solution');
-    await sendPromptToAI(userText);
-  }
-  
-  // CASE 6: Default - continue conversation
-  else {
-    print('DEBUG: Default case - continuing conversation');
-    await sendPromptToAI(userText);
-  }
-}
 
   void _resetConversation() {
     _conversationStage = 'initial';
@@ -525,19 +571,30 @@ Future<void> handleUserMessage(String userText) async {
 
   AIResponse _parseResponse(String responseText) {
     try {
-      final cleanedText = responseText
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      // 1. Find the start and end of the JSON object
+      final startIndex = responseText.indexOf('{');
+      final endIndex = responseText.lastIndexOf('}');
 
-      final jsonMap = jsonDecode(cleanedText) as Map<String, dynamic>;
+      if (startIndex == -1 || endIndex == -1) {
+        throw Exception("No JSON structure found in response");
+      }
+
+      // 2. Extract ONLY the JSON part
+      final jsonString = responseText.substring(startIndex, endIndex + 1);
+
+      // 3. Decode it
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
       return AIResponse.fromJson(jsonMap, responseText);
+
     } catch (e) {
       print('Error parsing JSON response: $e');
       print('Raw AI Response: $responseText');
+      
+      // Fallback: Return a valid response object even if parsing fails, 
+      // so the user doesn't get a dead end.
       return AIResponse(
         suggestions: [],
-        rawText: "Sorry, I had trouble formatting my response. Please try again.",
+        rawText: "I apologize, but I'm having a technical glitch processing the solution. Could you please ask me to 'try again'?",
         followUp: true,
       );
     }

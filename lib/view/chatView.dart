@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:e_repairkit/models/message.dart';
 import 'package:e_repairkit/models/shop.dart';
 import 'package:e_repairkit/viewmodels/chat_viewmodel.dart';
+import 'package:e_repairkit/widget/chat_history_drawer.dart';
 import 'package:e_repairkit/widget/chat_overflow_menu.dart';
 import 'package:e_repairkit/widget/shop_card.dart';
 import 'package:e_repairkit/widget/suggestion_card.dart';
@@ -16,6 +17,7 @@ class ChatView extends StatefulWidget {
 }
 
 class _ChatViewState extends State<ChatView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
 
@@ -32,6 +34,10 @@ class _ChatViewState extends State<ChatView> {
       viewModel.setAttachedImagePath(null);
       Future.delayed(const Duration(milliseconds: 50), () => _scrollToBottom());
     }
+
+    
+
+    
   }
 
   void _scrollToBottom() {
@@ -50,6 +56,10 @@ class _ChatViewState extends State<ChatView> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
+
+      key: _scaffoldKey,
+      endDrawer: const ChatHistoryDrawer(),
+
       appBar: AppBar(
         title: const Text('AI Repair Assistant'),
         actions: [
@@ -61,7 +71,7 @@ class _ChatViewState extends State<ChatView> {
       ),
       body: Column(
         children: [
-          // --- Message List with Diagnostic Status Bar ---
+          // --- 1. Message List (Expanded to fill space) ---
           Expanded(
             child: StreamBuilder<List<Message>>(
               stream: viewModel.messagesStream,
@@ -98,38 +108,26 @@ class _ChatViewState extends State<ChatView> {
 
                 final items = [...messages, ...viewModel.shops];
 
-                return Column(
-                  children: [
-                    // Diagnostic Status Bar
-                    _DiagnosticStatusBar(
-                      hasProvidedSolution: _hasSuggestions(messages),
-                    ),
-                    
-                    // Message List
-                    Expanded(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(8.0),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
 
-                          if (item is Message) {
-                            return _MessageBubble(message: item);
-                          } else if (item is Shop) {
-                            return ShopCard(shop: item);
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ),
-                  ],
+                    if (item is Message) {
+                      return _MessageBubble(message: item);
+                    } else if (item is Shop) {
+                      return ShopCard(shop: item);
+                    }
+                    return const SizedBox.shrink();
+                  },
                 );
               },
             ),
           ),
 
-          // --- Solution Verification Indicator ---
+          // --- 2. Solution Verification Indicator (Yes/No buttons) ---
           StreamBuilder<List<Message>>(
             stream: viewModel.messagesStream,
             builder: (context, snapshot) {
@@ -146,7 +144,7 @@ class _ChatViewState extends State<ChatView> {
             },
           ),
 
-          // --- Loading Indicator ---
+          // --- 3. Loading Indicator ---
           if (viewModel.isLoading)
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -170,7 +168,7 @@ class _ChatViewState extends State<ChatView> {
               ),
             ),
 
-          // --- Text Input ---
+          // --- 4. Text Input Bar ---
           StreamBuilder<List<Message>>(
             stream: viewModel.messagesStream,
             builder: (context, snapshot) {
@@ -206,7 +204,8 @@ class _ChatViewState extends State<ChatView> {
   }
 }
 
-// --- DIAGNOSTIC STATUS BAR ---
+
+// ignore: unused_element
 class _DiagnosticStatusBar extends StatelessWidget {
   final bool hasProvidedSolution;
 
@@ -216,34 +215,96 @@ class _DiagnosticStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: hasProvidedSolution ? Colors.green.shade50 : Colors.blue.shade50,
-        border: Border(
-          bottom: BorderSide(
-            color: hasProvidedSolution ? Colors.green.shade200 : Colors.blue.shade200,
+    final vm = context.read<ChatViewModel>();
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (value) async {
+        if (value == 'attach') {
+           // Your image picker logic here (if needed)
+           // If you need the picker logic from the parent, you might need to pass a callback function.
+        } 
+        else if (value == 'clear') {
+           vm.resetSession();
+        }
+        else if (value == 'history') {
+           // --- FIX IS HERE ---
+           // We use Scaffold.of(context) to find the parent Scaffold automatically.
+           // No need for _scaffoldKey!
+           Scaffold.of(context).openEndDrawer(); 
+        }
+        else if (value == 'practical') {
+           vm.setMode('practical');
+        } else if (value == 'experimental') {
+           vm.setMode('experimental');
+        } else if (value == 'creativity') {
+           // Show your slider dialog
+           double temp = vm.temperature;
+           await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Creativity'),
+              content: StatefulBuilder(
+                builder: (c, setState) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Slider(
+                      value: temp,
+                      min: 0,
+                      max: 1,
+                      divisions: 10,
+                      label: temp.toStringAsFixed(2),
+                      onChanged: (v) => setState(() => temp = v),
+                    ),
+                    Text('Creativity: ${temp.toStringAsFixed(2)}'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    vm.setTemperature(temp);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'clear',
+          child: Row(
+            children: [
+              Icon(Icons.refresh, color: Colors.grey, size: 20),
+              SizedBox(width: 12),
+              Text('New Chat'),
+            ],
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            hasProvidedSolution ? Icons.check_circle : Icons.psychology,
-            size: 16,
-            color: hasProvidedSolution ? Colors.green.shade700 : Colors.blue.shade700,
+        const PopupMenuItem(
+          value: 'history',
+          child: Row(
+            children: [
+              Icon(Icons.history, color: Colors.grey, size: 20),
+              SizedBox(width: 12),
+              Text('History'),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            hasProvidedSolution ? 'Solution Provided' : 'Diagnosing...',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: hasProvidedSolution ? Colors.green.shade700 : Colors.blue.shade700,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: 'attach', child: Text('Attach photo')),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: 'practical', child: Text('Mode: Practical')),
+        const PopupMenuItem(value: 'experimental', child: Text('Mode: Experimental')),
+        const PopupMenuItem(value: 'creativity', child: Text('Creativeness')),
+      ],
     );
   }
 }
@@ -349,68 +410,108 @@ class _MessageInputBar extends StatelessWidget {
     } else {
       hintText = 'Describe your device problem...';
     }
+    final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-      child: Row(
-        children: [
-          if (attachedImagePath != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Stack(
+  return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Image Preview Area (Shows above text field if image exists)
+              if (attachedImagePath != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(attachedImagePath!),
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Photo attached",
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () {
+                          context.read<ChatViewModel>().setAttachedImagePath(null);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Text Field Row
+              Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(attachedImagePath!),
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: controller,
+                        onSubmitted: (_) => onSend(),
+                        maxLines: null,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          hintText: hintText,
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  Positioned(
-                    top: -4,
-                    right: -4,
+                  const SizedBox(width: 12),
+                  // Send Button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor,
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
-                      icon: const Icon(Icons.cancel, color: Colors.red, size: 20),
-                      onPressed: () {
-                        context.read<ChatViewModel>().setAttachedImagePath(null);
-                      },
+                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                      onPressed: onSend,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-          Expanded(
-            child: TextField(
-              controller: controller,
-              onSubmitted: (_) => onSend(),
-              maxLines: null,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: onSend,
-            color: Theme.of(context).primaryColor,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -488,6 +589,7 @@ class _MessageBubble extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. Message Text
               Text(
                 message.text,
                 style: TextStyle(
@@ -497,6 +599,8 @@ class _MessageBubble extends StatelessWidget {
                   fontSize: 15,
                 ),
               ),
+              
+              // 2. Edited Tag
               if (message.edited)
                 Padding(
                   padding: const EdgeInsets.only(top: 6.0),
@@ -508,6 +612,8 @@ class _MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
+
+              // 3. Solution Cards (Steps)
               if (message.suggestions != null &&
                   message.suggestions!.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -520,7 +626,15 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ),
               ],
-              if (!isUser && message.suggestions != null && message.suggestions!.isNotEmpty)
+
+              // 4. FIX: "Find Shops" Button
+              // Logic: Show if suggestions exist OR if the text mentions "shop"/"professional"
+              if (!isUser && 
+                  ((message.suggestions != null && message.suggestions!.isNotEmpty) ||
+                   message.text.toLowerCase().contains('shop') || 
+                   message.text.toLowerCase().contains('service center') ||
+                   message.text.toLowerCase().contains('professional') ||
+                   message.id.startsWith('shop_')))
                 Padding(
                   padding: const EdgeInsets.only(top: 12.0),
                   child: ElevatedButton.icon(

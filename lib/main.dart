@@ -6,7 +6,6 @@ import 'package:e_repairkit/services/auth_service.dart';
 import 'package:e_repairkit/services/forum_service.dart';
 import 'package:e_repairkit/services/impl/feedback_service.dart';
 import 'package:e_repairkit/services/impl/firebase_auth_service.dart';
-import 'package:e_repairkit/services/impl/firestore_forum_service.dart';
 import 'package:e_repairkit/services/impl/gemini_ai_Service.dart';
 import 'package:e_repairkit/services/impl/google_location_service.dart';
 import 'package:e_repairkit/services/impl/hms_push_service.dart';
@@ -78,7 +77,7 @@ Future<void> main() async {
 
         // --- FORUM SERVICE (Depends on PushService) ---
         Provider<ForumService>(
-          create: (context) => FirestoreForumService(
+          create: (context) => ForumService(
             pushService: context.read<PushService>(),
           ),
         ),

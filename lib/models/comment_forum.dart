@@ -18,16 +18,20 @@ class Comment {
   });
 
   // From Firestore to our model
-  factory Comment.fromJson(Map<String, dynamic> json) {
+  factory Comment.fromJson(Map<String, dynamic> json, String id) {
     return Comment(
       id: json['id'] as String,
       postId: json['postId'] as String,
       userId: json['userId'] as String,
       username: json['username'] as String,
       text: json['text'] as String,
-      timestamp: json['timestamp'] as Timestamp,
+      timestamp: (json['timestamp'] is Timestamp) 
+    ? json['timestamp'] 
+    : Timestamp.now(),
     );
   }
+
+  
 
   // From our model to Firestore
   Map<String, dynamic> toJson() {

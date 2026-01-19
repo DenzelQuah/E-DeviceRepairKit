@@ -1,9 +1,8 @@
-import 'package:e_repairkit/models/repair_suggestion.dart'; // <-- 1. CHANGED IMPORT
+import 'package:e_repairkit/models/repair_suggestion.dart';
 import 'package:e_repairkit/services/forum_service.dart';
 import 'package:e_repairkit/view/post_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 
 class ForumView extends StatefulWidget {
   const ForumView({super.key});
@@ -13,13 +12,13 @@ class ForumView extends StatefulWidget {
 }
 
 class _ForumViewState extends State<ForumView> {
-  // --- 3. STREAM IS NOW List<RepairSuggestion> ---
+  // Stream of RepairSuggestion objects
   late Stream<List<RepairSuggestion>> _postsStream;
 
   @override
   void initState() {
     super.initState();
-    // 4. CALL THE NEW SERVICE METHOD
+    // Initialize the stream here to avoid "LateInitializationError"
     _postsStream = context.read<ForumService>().getPublishedSolutions();
   }
 
@@ -28,14 +27,16 @@ class _ForumViewState extends State<ForumView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community Forum'),
-        // 5. REMOVED FAB (Users don't create posts, they publish them)
       ),
-      body: StreamBuilder<List<RepairSuggestion>>( // <-- 6. CHANGED MODEL
+      body: StreamBuilder<List<RepairSuggestion>>(
         stream: _postsStream,
         builder: (context, snapshot) {
+          // 1. Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          
+          // 2. Error State
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -47,6 +48,8 @@ class _ForumViewState extends State<ForumView> {
               ),
             );
           }
+
+          // 3. Empty State
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Padding(
@@ -62,7 +65,7 @@ class _ForumViewState extends State<ForumView> {
             );
           }
 
-          // --- Success State (Show the list of solutions) ---
+          // 4. Success State
           final solutions = snapshot.data!;
 
           return ListView.builder(
@@ -70,7 +73,6 @@ class _ForumViewState extends State<ForumView> {
             itemCount: solutions.length,
             itemBuilder: (context, index) {
               final solution = solutions[index];
-              // --- 7. USE THE NEW POST CARD ---
               return _buildSolutionPostCard(context, solution);
             },
           );
@@ -79,14 +81,14 @@ class _ForumViewState extends State<ForumView> {
     );
   }
 
-  /// A helper widget to build the card for each solution
+  /// Helper widget to build the card for each solution
   Widget _buildSolutionPostCard(BuildContext context, RepairSuggestion solution) {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: InkWell(
         onTap: () {
-          // --- 8. NAVIGATE TO THE NEW DETAIL PAGE ---
+          // Navigate to the full Detail Page
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -100,23 +102,23 @@ class _ForumViewState extends State<ForumView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. The Post Title (from the problem)
+              // Title (The Problem)
               Text(
-                solution.query, // This is the "Problem"
+                solution.query, 
                 style: theme.textTheme.titleLarge
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              // 2. The Solution Title
+              // Subtitle (The Solution)
               Text(
-                solution.title, // This is the solution title
+                solution.title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 12),
 
-              // 3. Post Stats (Tries, Rating, Comments)
+              // Stats Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -129,7 +131,6 @@ class _ForumViewState extends State<ForumView> {
                   _buildStatChip(
                     context,
                     icon: Icons.star_outline,
-                    // Format rating to one decimal place
                     label: '${solution.avgRating.toStringAsFixed(1)} stars (${solution.ratingCount})',
                     color: theme.colorScheme.secondary,
                   ),
@@ -148,7 +149,7 @@ class _ForumViewState extends State<ForumView> {
     );
   }
 
-  // Helper for the stat chips
+  // Helper for the small icon+text chips
   Widget _buildStatChip(BuildContext context,
       {required IconData icon, required String label, required Color color}) {
     return Row(

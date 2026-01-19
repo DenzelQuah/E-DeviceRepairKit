@@ -12,6 +12,8 @@ class AIResponse {
     required this.followUp,
   });
 
+  
+
 
   factory AIResponse.fromJson(Map<String, dynamic> json, String originalText) {
     var suggestionsList = (json['suggestions'] as List? ?? [])
@@ -23,8 +25,6 @@ class AIResponse {
       followUp: json['followUp'] as bool? ?? true, // Safely extract the boolean
       rawText: json['rawText'] ?? originalText,
     );
-
-
     
   }
 }

@@ -4,6 +4,7 @@ import 'package:e_repairkit/models/repair_suggestion.dart';
 import 'package:e_repairkit/services/auth_service.dart';
 import 'package:e_repairkit/services/feedback_service.dart';
 import 'package:e_repairkit/services/forum_service.dart';
+import 'package:e_repairkit/widget/device_sync_dialog.dart';
 import 'package:e_repairkit/widget/suggestion_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -80,6 +81,21 @@ class _ProfileViewState extends State<ProfileView> {
                 // AuthWrapper will handle the rest
               },
             ),
+
+            IconButton(
+  icon: const Icon(Icons.download_for_offline),
+  tooltip: "Offline Settings",
+  onPressed: () {
+    showDialog(
+      context: context,
+      builder: (context) => const DeviceSyncDialog(
+        // We pass an empty list because the new _startSync logic 
+        // fetches fresh data from the database anyway!
+        forumData: [], 
+      ),
+    );
+  },
+),
           ],
         ),
         body: NestedScrollView(
